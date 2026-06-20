@@ -10,7 +10,7 @@ use tokio_util::sync::CancellationToken;
 /// is complete, cancellation is requested, or a terminal error occurs.
 ///
 /// Readiness and liveness are separate from this trait. Components that need to
-/// expose health state should also implement the crate's health-check API.
+/// expose health state should also implement [`HealthCheck`](crate::HealthCheck).
 pub trait Component {
     /// The terminal error returned by [`run`](Component::run).
     type RunError: Error + Send + Sync + 'static;
