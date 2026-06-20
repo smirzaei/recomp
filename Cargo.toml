@@ -1,6 +1,9 @@
 [workspace]
-members = []
+members = ["crates/component"]
 resolver = "3"
+
+[workspace.dependencies]
+tokio-util = "0.7.18"
 
 [workspace.package]
 version = "0.1.0"
