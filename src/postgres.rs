@@ -4,6 +4,7 @@
 
 mod component;
 mod config;
+#[cfg_attr(docsrs, doc(cfg(feature = "postgres-migrate")))]
 #[cfg(feature = "postgres-migrate")]
 pub mod migration;
 mod options;
@@ -16,5 +17,6 @@ pub use config::{
     Config, ConfigBuilder, ConfigBuilderError, DEFAULT_ACQUIRE_TIMEOUT, DEFAULT_IDLE_TIMEOUT,
     DEFAULT_MAX_CONNECTIONS, DEFAULT_MAX_LIFETIME, DEFAULT_MIN_CONNECTIONS, Password,
 };
+#[cfg_attr(docsrs, doc(cfg(feature = "testcontainers")))]
 #[cfg(feature = "testcontainers")]
 pub use test_container::{PostgresContainer, PostgresContainerStartError};

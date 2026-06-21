@@ -8,7 +8,7 @@ repository = "https://github.com/smirzaei/recomp"
 readme = "README.md"
 
 [package.metadata.docs.rs]
-features = ["postgres"]
+features = ["postgres", "postgres-migrate", "testcontainers"]
 
 [features]
 default = []
