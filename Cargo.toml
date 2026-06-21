@@ -3,6 +3,9 @@ name = "recomp"
 version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
+description = "Reusable components"
+repository = "https://github.com/smirzaei/recomp"
+readme = "README.md"
 
 [dependencies]
 tokio = { version = "1.52.3", default-features = false, features = ["macros", "time"] }
