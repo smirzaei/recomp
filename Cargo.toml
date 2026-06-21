@@ -7,6 +7,9 @@ description = "Reusable components"
 repository = "https://github.com/smirzaei/recomp"
 readme = "README.md"
 
+[package.metadata.docs.rs]
+features = ["postgres"]
+
 [features]
 default = []
 postgres = ["dep:sqlx", "dep:thiserror"]
