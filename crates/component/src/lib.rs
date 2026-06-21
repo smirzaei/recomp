@@ -13,4 +13,4 @@ mod component;
 mod health;
 
 pub use component::Component;
-pub use health::{HealthCheck, HealthProbe};
+pub use health::{HealthCheck, HealthProbe, WaitUntilHealthyError};
