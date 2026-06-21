@@ -39,7 +39,7 @@ impl Error for WaitUntilHealthyError {}
 
 /// Health reporting for a component or other runtime dependency.
 ///
-/// Implement this trait alongside [`Component`](crate::Component) when callers
+/// Implement this trait alongside [`Component`](super::Component) when callers
 /// need to wait for readiness, supervise startup, or expose health probes.
 pub trait HealthCheck {
     /// The reason the component is not healthy for a probe.

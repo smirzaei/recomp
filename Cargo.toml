@@ -1,20 +1,20 @@
-[workspace]
-members = ["crates/component"]
-resolver = "3"
-
-[workspace.dependencies]
-tokio = { version = "1.52.3", default-features = false }
-tokio-util = "0.7.18"
-
-[workspace.package]
+[package]
+name = "recomp"
 version = "0.1.0"
 edition = "2024"
 license = "MIT OR Apache-2.0"
 
-[workspace.lints.rust]
+[dependencies]
+tokio = { version = "1.52.3", default-features = false, features = ["macros", "time"] }
+tokio-util = "0.7.18"
+
+[dev-dependencies]
+tokio = { version = "1.52.3", default-features = false, features = ["rt", "time"] }
+
+[lints.rust]
 warnings = "deny"
 
-[workspace.lints.clippy]
+[lints.clippy]
 all = { level = "deny", priority = -1 }
 pedantic = { level = "deny", priority = -1 }
 nursery = { level = "deny", priority = -1 }

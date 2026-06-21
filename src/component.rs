@@ -1,6 +1,21 @@
+//! Traits for long-running application components.
+//!
+//! A component owns a runtime task such as a web server, queue consumer,
+//! scheduler, database connector, or other process that usually runs for the
+//! lifetime of an application. Components run until they complete, receive a
+//! cancellation signal, or hit a terminal error.
+//!
+//! Health reporting is intentionally separate from the component lifecycle. A
+//! component can implement health-check behavior alongside [`Component`] when
+//! callers need to wait for readiness or expose health probes.
+
 use std::{error::Error, future::Future};
 
 use tokio_util::sync::CancellationToken;
+
+mod health;
+
+pub use health::{HealthCheck, HealthProbe, WaitUntilHealthyError};
 
 /// A long-running application component.
 ///
@@ -10,7 +25,7 @@ use tokio_util::sync::CancellationToken;
 /// is complete, cancellation is requested, or a terminal error occurs.
 ///
 /// Readiness and liveness are separate from this trait. Components that need to
-/// expose health state should also implement [`HealthCheck`](crate::HealthCheck).
+/// expose health state should also implement [`HealthCheck`].
 pub trait Component {
     /// The terminal error returned by [`run`](Component::run).
     type RunError: Error + Send + Sync + 'static;
