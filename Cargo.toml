@@ -13,6 +13,7 @@ features = ["postgres"]
 [features]
 default = []
 postgres = ["dep:sqlx", "dep:thiserror"]
+postgres-migrate = ["postgres", "sqlx/migrate"]
 testcontainers = ["postgres", "dep:testcontainers-modules", "dep:url"]
 
 [dependencies]

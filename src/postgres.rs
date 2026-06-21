@@ -4,6 +4,8 @@
 
 mod component;
 mod config;
+#[cfg(feature = "postgres-migrate")]
+pub mod migration;
 mod options;
 #[cfg(feature = "testcontainers")]
 mod test_container;
