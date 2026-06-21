@@ -245,3 +245,67 @@ impl HealthCheck for Postgres {
         }
     }
 }
+
+#[cfg(test)]
+#[cfg(feature = "testcontainers")]
+mod tests {
+    use std::{sync::Arc, time::Duration};
+
+    use sqlx::Executor as _;
+    use tokio_util::sync::CancellationToken;
+
+    use crate::{
+        component::{Component as _, HealthCheck as _},
+        postgres::PostgresContainer,
+    };
+
+    use super::Postgres;
+
+    const HEALTH_WAIT_INTERVAL: Duration = Duration::from_millis(100);
+    const HEALTH_WAIT_TIMEOUT: Duration = Duration::from_secs(10);
+
+    #[tokio::test]
+    async fn runs_against_test_container() {
+        let container = match PostgresContainer::start().await {
+            Ok(container) => container,
+            Err(error) => panic!("Postgres test container must start: {error}"),
+        };
+        let config = match container.config() {
+            Ok(config) => config,
+            Err(error) => panic!("Postgres test container config must build: {error}"),
+        };
+        let postgres = Arc::new(Postgres::new("postgres-test", config));
+        let cancel = CancellationToken::new();
+        let run = {
+            let postgres = Arc::clone(&postgres);
+            let cancel = cancel.clone();
+            tokio::spawn(async move { postgres.run(cancel).await })
+        };
+
+        let health_wait =
+            postgres.wait_until_healthy(CancellationToken::new(), HEALTH_WAIT_INTERVAL);
+        match tokio::time::timeout(HEALTH_WAIT_TIMEOUT, health_wait).await {
+            Ok(Ok(())) => {}
+            Ok(Err(error)) => panic!("Postgres health wait must not be cancelled: {error}"),
+            Err(error) => {
+                panic!("Postgres component did not become healthy before the test timeout: {error}")
+            }
+        }
+
+        let pool = match postgres.pool() {
+            Ok(pool) => pool,
+            Err(error) => panic!("healthy Postgres component must expose a pool: {error}"),
+        };
+        match pool.execute("SELECT 1").await {
+            Ok(_) => {}
+            Err(error) => panic!("Postgres test container must answer SELECT 1: {error}"),
+        }
+
+        cancel.cancel();
+        match run.await {
+            Ok(Ok(())) => {}
+            Ok(Err(error)) => panic!("Postgres component must stop cleanly: {error}"),
+            Err(error) => panic!("Postgres component task must not panic: {error}"),
+        }
+    }
+}
