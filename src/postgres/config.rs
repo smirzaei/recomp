@@ -15,8 +15,6 @@ pub const DEFAULT_MAX_CONNECTIONS: NonZeroU32 = match NonZeroU32::new(10) {
 };
 /// Default target minimum number of pool connections.
 pub const DEFAULT_MIN_CONNECTIONS: u32 = 0;
-/// Default per-connection prepared statement cache capacity.
-pub const DEFAULT_STATEMENT_CACHE_CAPACITY: usize = 100;
 
 /// Error returned when building Postgres configuration.
 #[derive(Clone, Copy, Debug, Eq, Error, PartialEq)]
@@ -70,6 +68,7 @@ impl fmt::Debug for Password {
 /// | Password | `sqlx` may use `PGPASSWORD`, `PGPASSFILE`, or the default `.pgpass` file; password authentication falls back to an empty string. |
 /// | Database | The Postgres startup protocol defaults to the username. |
 /// | Application name | `sqlx` checks `PGAPPNAME` when using its defaults; otherwise no application name is sent. |
+/// | Statement cache capacity | `sqlx` uses its own default, currently `100`. |
 ///
 /// Pool fields have concrete defaults so a pool has bounded behavior even when
 /// only connection defaults are used.
@@ -81,7 +80,6 @@ impl fmt::Debug for Password {
 /// | Max lifetime | Maximum age for a connection before it is closed and replaced. | [`DEFAULT_MAX_LIFETIME`] |
 /// | Max connections | Maximum number of open pool connections. | [`DEFAULT_MAX_CONNECTIONS`] |
 /// | Min connections | Target minimum number of open pool connections. | [`DEFAULT_MIN_CONNECTIONS`] |
-/// | Statement cache capacity | Per-connection prepared statement cache capacity. | [`DEFAULT_STATEMENT_CACHE_CAPACITY`] |
 #[derive(Clone, Debug, Default, Eq, PartialEq)]
 pub struct ConfigBuilder {
     host: Option<String>,
@@ -213,7 +211,7 @@ impl ConfigBuilder {
 
     /// Overrides the per-connection prepared statement cache capacity.
     ///
-    /// Defaults to [`DEFAULT_STATEMENT_CACHE_CAPACITY`].
+    /// If omitted, `sqlx` uses its own default, currently `100`.
     #[must_use]
     pub const fn with_statement_cache_capacity(mut self, capacity: usize) -> Self {
         self.statement_cache_capacity = Some(capacity);
@@ -239,14 +237,12 @@ impl ConfigBuilder {
             database: self.database,
             application_name: self.application_name,
             port: self.port,
+            statement_cache_capacity: self.statement_cache_capacity,
             acquire_timeout: self.acquire_timeout.unwrap_or(DEFAULT_ACQUIRE_TIMEOUT),
             idle_timeout: self.idle_timeout.unwrap_or(DEFAULT_IDLE_TIMEOUT),
             max_lifetime: self.max_lifetime.unwrap_or(DEFAULT_MAX_LIFETIME),
             max_connections,
             min_connections,
-            statement_cache_capacity: self
-                .statement_cache_capacity
-                .unwrap_or(DEFAULT_STATEMENT_CACHE_CAPACITY),
         })
     }
 }
@@ -264,12 +260,12 @@ pub struct Config {
     password: Option<Password>,
     database: Option<String>,
     application_name: Option<String>,
+    statement_cache_capacity: Option<usize>,
     acquire_timeout: Duration,
     idle_timeout: Duration,
     max_lifetime: Duration,
     max_connections: NonZeroU32,
     min_connections: u32,
-    statement_cache_capacity: usize,
 }
 
 impl Config {
@@ -364,9 +360,10 @@ impl Config {
         self.min_connections
     }
 
-    /// Returns the per-connection prepared statement cache capacity.
+    /// Returns the explicit per-connection prepared statement cache capacity,
+    /// if one was configured.
     #[must_use]
-    pub const fn statement_cache_capacity(&self) -> usize {
+    pub const fn statement_cache_capacity(&self) -> Option<usize> {
         self.statement_cache_capacity
     }
 }
@@ -409,6 +406,11 @@ mod tests {
             None,
             "config must not invent an application name"
         );
+        assert_eq!(
+            config.statement_cache_capacity(),
+            None,
+            "config must not invent a statement cache capacity"
+        );
     }
 
     #[test]
@@ -439,11 +441,6 @@ mod tests {
             config.min_connections(),
             DEFAULT_MIN_CONNECTIONS,
             "config must default the min connections"
-        );
-        assert_eq!(
-            config.statement_cache_capacity(),
-            DEFAULT_STATEMENT_CACHE_CAPACITY,
-            "config must default the statement cache capacity"
         );
     }
 
@@ -542,7 +539,7 @@ mod tests {
         );
         assert_eq!(
             config.statement_cache_capacity(),
-            statement_cache_capacity,
+            Some(statement_cache_capacity),
             "config must preserve the supplied statement cache capacity"
         );
     }
