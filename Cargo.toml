@@ -7,7 +7,12 @@ description = "Reusable components"
 repository = "https://github.com/smirzaei/recomp"
 readme = "README.md"
 
+[features]
+default = []
+postgres = ["dep:thiserror"]
+
 [dependencies]
+thiserror = { version = "2.0.18", optional = true }
 tokio = { version = "1.52.3", default-features = false, features = ["macros", "time"] }
 tokio-util = "0.7.18"
 
