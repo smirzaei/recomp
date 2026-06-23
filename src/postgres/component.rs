@@ -1,6 +1,6 @@
 use std::{
     sync::{
-        OnceLock,
+        Arc, OnceLock,
         atomic::{AtomicU8, Ordering},
     },
     time::Duration,
@@ -187,7 +187,7 @@ impl Component for Postgres {
         self.name.as_str()
     }
 
-    async fn run(&self, cancel: CancellationToken) -> Result<(), Self::RunError> {
+    async fn run(self: Arc<Self>, cancel: CancellationToken) -> Result<(), Self::RunError> {
         if self
             .health
             .compare_exchange(
@@ -279,7 +279,7 @@ mod tests {
         let run = {
             let postgres = Arc::clone(&postgres);
             let cancel = cancel.clone();
-            tokio::spawn(async move { postgres.run(cancel).await })
+            tokio::spawn(postgres.run(cancel))
         };
 
         let health_wait =

@@ -9,7 +9,7 @@
 //! component can implement health-check behavior alongside [`Component`] when
 //! callers need to wait for readiness or expose health probes.
 
-use std::{error::Error, future::Future};
+use std::{error::Error, future::Future, sync::Arc};
 
 use tokio_util::sync::CancellationToken;
 
@@ -26,7 +26,7 @@ pub use health::{HealthCheck, HealthProbe, WaitUntilHealthyError};
 ///
 /// Readiness and liveness are separate from this trait. Components that need to
 /// expose health state should also implement [`HealthCheck`].
-pub trait Component {
+pub trait Component: Send + Sync + 'static {
     /// The terminal error returned by [`run`](Component::run).
     type RunError: Error + Send + Sync + 'static;
 
@@ -40,7 +40,7 @@ pub trait Component {
     /// component stopped without a terminal error; returning `Err` means the
     /// component cannot continue without external intervention.
     fn run(
-        &self,
+        self: Arc<Self>,
         cancel: CancellationToken,
     ) -> impl Future<Output = Result<(), Self::RunError>> + Send;
 }
